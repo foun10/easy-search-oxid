@@ -1,0 +1,23 @@
+{#
+    Puts the filter button into the row above the product grid - the row that
+    already carries sorting, items per page and the grid/list switch.
+
+    This partial is the first thing that row includes and the only one of them
+    with a block of its own, so it is the single hook into that row on both the
+    search page and a category listing. Neither theme file is touched.
+
+    Only the button. The chips go on their own full-width line above the row,
+    from the page templates - there can be a lot of them, and squeezing them
+    into a row of controls makes both unreadable.
+
+    The button is placed by flex order rather than by markup position: the
+    module's markup has to enter through this one block, which comes first, and
+    would otherwise sit in front of the theme's own controls.
+#}
+{% extends "widget/locator/attributes.html.twig" %}
+
+{% block widget_locator_attributes %}
+    {{ parent() }}
+
+    {% include "@foun10EasySearch/frontend/toolbar.html.twig" %}
+{% endblock %}

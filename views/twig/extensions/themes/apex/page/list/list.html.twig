@@ -1,0 +1,38 @@
+{#
+    The filter panel and the active-filter chips on a category listing.
+
+    The button that opens the panel is not here: it comes from the locator row
+    (widget/locator/attributes.html.twig), which this page includes already, so
+    the search page and every listing get it from one place.
+
+    Scoped to apex for the same reason as the search page - see the note there.
+#}
+{% extends "page/list/list.html.twig" %}
+
+{% block page_list_upperlocator %}
+    {{ parent() }}
+
+    {# Directly below the locator row and above the grid, full width: the chips
+       describe the result the grid is showing, so they belong between the two. #}
+    {% include "@foun10EasySearch/frontend/active-filters.html.twig" %}
+{% endblock %}
+
+{% block page_list_listbody %}
+    {#
+        The chips again, for the case where the filter matched nothing: the
+        theme renders this whole body only when there are articles, so without
+        this a customer who filtered themselves into an empty category would
+        have no way to undo it.
+    #}
+    {% if not oView.getArticleList() %}
+        <div class="container-xxl">
+            {% include "@foun10EasySearch/frontend/active-filters.html.twig" %}
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+
+    {# An offcanvas, so it can sit at the end of the body regardless of where
+       the button that opens it ended up. #}
+    {% include "@foun10EasySearch/frontend/panel.html.twig" %}
+{% endblock %}

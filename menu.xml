@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<OX>
+    <OXMENU id="FOUN10_MODULES">
+        <MAINMENU id="FOUN10_EASYSEARCH">
+            <SUBMENU id="FOUN10_EASYSEARCH_ATTRIBUTES" cl="foun10easysearchattributes" />
+            <SUBMENU id="FOUN10_EASYSEARCH_SYNONYMS" cl="foun10easysearchsynonyms" />
+            <SUBMENU id="FOUN10_EASYSEARCH_INDEX" cl="foun10easysearchreindex" />
+            <SUBMENU id="FOUN10_EASYSEARCH_LOG" cl="foun10easysearchlog" />
+        </MAINMENU>
+    </OXMENU>
+</OX>

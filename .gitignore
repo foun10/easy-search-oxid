@@ -1,0 +1,19 @@
+# Dependencies are resolved per PHP version (CI matrix spans 7.4 to 8.x), so there
+# is deliberately NO composer.lock in the repository - a locked tree would be tied
+# to exactly one PHP version and break the matrix.
+/vendor/
+/composer.lock
+
+# PHPUnit
+/.phpunit.cache/
+/.phpunit.result.cache
+/coverage/
+
+# Infection (mutation testing) - report and working directory
+/infection.log
+/.infection/
+/infection.phar
+
+# IDE
+/.idea/
+/.vscode/

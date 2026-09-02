@@ -1,0 +1,4 @@
+# Consistent line endings regardless of whether someone works on Windows, WSL2
+# or Linux. PHP files with CRLF would otherwise produce whole-file diffs on every
+# platform switch.
+* text=auto eol=lf

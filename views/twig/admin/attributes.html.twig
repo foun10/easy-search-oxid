@@ -1,0 +1,176 @@
+{#
+    foun10 -> Suche -> Attribute
+
+    Two lists, dragged between: attributes that are not configured, and those
+    that are. The two roles are NOT two lists - an attribute is very often both
+    a filter and searchable - so each configured row carries its own pair of
+    checkboxes.
+
+    Order within the configured list decides the order the filter sidebar
+    renders, which is why only that list is sortable.
+
+    The drag and drop is plain HTML5 - no jQuery UI to vendor into the module
+    for one screen.
+#}
+{# Bump when the css or js below changes - the urls are otherwise static and
+   the admin serves them with caching headers, so a browser keeps the old file. #}
+{% set assetVersion = '7' %}
+
+<link href="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/css/admin.css')|raw }}?v={{ assetVersion }}" rel="stylesheet">
+
+<div class="foun10-admin">
+    <h1>{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_HEADLINE" }) }}</h1>
+    <p class="foun10-admin__intro">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_INTRO" }) }}</p>
+
+    <form name="myedit" id="foun10EasySearchAttributeForm" method="post" action="{{ oViewConf.getSelfLink()|raw }}">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="foun10easysearchattributes">
+        <input type="hidden" name="fnc" value="save">
+
+        {# Written by the script on every change; order carries the sidebar order #}
+        <input type="hidden" name="order" id="foun10OrderIds" value="">
+        <input type="hidden" name="facets" id="foun10FacetIds" value="">
+        <input type="hidden" name="searchable" id="foun10EasySearchableIds" value="">
+
+        <div class="foun10-admin__columns">
+            <div class="foun10-admin__column">
+                <h2 class="foun10-admin__column-title">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_UNUSED" }) }}</h2>
+                <p class="foun10-admin__column-hint">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_UNUSED_HINT" }) }}</p>
+
+                <ul class="foun10-admin__list" data-list="unused">
+                    {% for item in oView.getUnusedAttributes() %}
+                        <li class="foun10-admin__item" draggable="true" data-id="{{ item.id }}">
+                            <span class="foun10-admin__grip" aria-hidden="true">&#x283F;</span>
+                            <span class="foun10-admin__text">
+                                <span class="foun10-admin__label">{{ item.title }}</span>
+                                {% if item.sample %}
+                                    <span class="foun10-admin__sample" title="{{ item.sample }}">{{ item.sample }}</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="foun10-admin__empty">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_EMPTY" }) }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="foun10-admin__column foun10-admin__column--wide">
+                <h2 class="foun10-admin__column-title">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_CONFIGURED" }) }}</h2>
+                <p class="foun10-admin__column-hint">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_CONFIGURED_HINT" }) }}</p>
+
+                {# The script rebuilds a configured row when one is dragged in, so
+                   everything it needs to render - the role labels, the display
+                   options, the languages a label can be given in - is handed to
+                   it as data on the list rather than duplicated in JS. #}
+                <ul class="foun10-admin__list foun10-admin__list--configured" data-list="configured"
+                    data-label-facet="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_ROLE_FACET" }) }}"
+                    data-label-searchable="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_ROLE_SEARCHABLE" }) }}"
+                    data-label-display="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_DISPLAY" }) }}"
+                    data-label-title="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_LABEL" }) }}"
+                    data-title-placeholder="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_LABEL_PLACEHOLDER" }) }}"
+                    data-displays="{{ oView.getDisplayModes()|json_encode }}"
+                    data-languages="{{ oView.getLanguages()|json_encode }}">
+                    {% for item in oView.getConfiguredAttributes() %}
+                        <li class="foun10-admin__item foun10-admin__item--configured"
+                            draggable="true" data-id="{{ item.id }}">
+                            <span class="foun10-admin__grip" aria-hidden="true">&#x283F;</span>
+                            <span class="foun10-admin__text">
+                                <span class="foun10-admin__label">{{ item.title }}</span>
+                                {% if item.sample %}
+                                    <span class="foun10-admin__sample" title="{{ item.sample }}">{{ item.sample }}</span>
+                                {% endif %}
+                            </span>
+
+                            <span class="foun10-admin__roles">
+                                <label class="foun10-admin__role">
+                                    <input type="checkbox" data-role="facet"{% if item.facet %} checked{% endif %}>
+                                    {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_ROLE_FACET" }) }}
+                                </label>
+
+                                <label class="foun10-admin__role">
+                                    <input type="checkbox" data-role="searchable"{% if item.searchable %} checked{% endif %}>
+                                    {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_ROLE_SEARCHABLE" }) }}
+                                </label>
+                            </span>
+
+                            {# Named fields rather than another comma separated
+                               hidden list: a label is free text and would break
+                               any delimiter chosen for it. #}
+                            <span class="foun10-admin__config">
+                                <label class="foun10-admin__config-field">
+                                    <span class="foun10-admin__config-label">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_DISPLAY" }) }}</span>
+
+                                    <select name="display[{{ item.id }}]" class="foun10-admin__display">
+                                        {% for mode in oView.getDisplayModes() %}
+                                            <option value="{{ mode.value }}"{% if mode.value == item.display %} selected{% endif %}>
+                                                {{ mode.label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+
+                                {% for language in oView.getLanguages() %}
+                                    <label class="foun10-admin__config-field">
+                                        <span class="foun10-admin__config-label">
+                                            {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_LABEL" }) }} {{ language.label }}
+                                        </span>
+
+                                        <input type="text" name="title[{{ item.id }}][{{ language.id }}]"
+                                               class="foun10-admin__title"
+                                               value="{{ item.labels[language.id]|default('') }}"
+                                               placeholder="{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_LABEL_PLACEHOLDER" }) }}">
+                                    </label>
+                                {% endfor %}
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="foun10-admin__empty">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_EMPTY" }) }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="foun10-admin__actions">
+            <button type="submit" class="foun10-admin__save" id="foun10Save">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_SAVE" }) }}
+            </button>
+
+            {# Only the phases this screen's settings actually affect: which
+               attributes are facets is written into the documents, and the
+               dictionary is derived from them. Category assignments are
+               untouched by anything on this page, so rebuilding them here would
+               be work nobody asked for. The full rebuild lives on the index
+               screen. #}
+            <button type="button" class="foun10-admin__reindex" data-reindex data-cl="foun10easysearchattributes"
+                    data-url="{{ oViewConf.getSelfLink()|raw }}"
+                    data-langs="{{ oView.getReindexScopes()|json_encode }}"
+                    data-phases="clear,index,dictionary">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX" }) }}
+            </button>
+
+            <span class="foun10-admin__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_HINT" }) }}</span>
+        </div>
+    </form>
+
+    {# Shown while the browser waits for the saved page to come back #}
+    <div class="foun10-modal" id="foun10SaveOverlay" hidden>
+        <div class="foun10-modal__box foun10-modal__box--busy" role="status" aria-live="polite">
+            <span class="foun10-spinner" aria-hidden="true"></span>
+
+            <div>
+                <h2 class="foun10-modal__title">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_SAVING" }) }}
+                </h2>
+
+                <p class="foun10-modal__note">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_SAVING_NOTE" }) }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+<script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/admin-attributes.js')|raw }}?v={{ assetVersion }}"></script>
+<script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/admin-reindex.js')|raw }}?v={{ assetVersion }}"></script>
+
+{% include "@foun10EasySearch/admin/_reindex-modal.html.twig" %}
+

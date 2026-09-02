@@ -1,0 +1,255 @@
+services:
+  _defaults:
+    public: false
+    autowire: true
+
+  foun10\EasySearch\Core\ModuleSettings:
+    class: foun10\EasySearch\Core\ModuleSettings
+    public: true
+
+  # Request scoped: the Search model extension fills it, the SearchController
+  # extension reads it. Shared instance, one request long.
+  # Editorial configuration, read from its own table so deployment cannot
+  # overwrite what a merchant arranged in the admin.
+  foun10\EasySearch\Core\AttributeConfiguration:
+    class: foun10\EasySearch\Core\AttributeConfiguration
+    public: true
+
+  # Same reasoning, and the same table-not-settings pattern: synonym rules are
+  # editorial content a merchant maintains, and deployment must not overwrite
+  # them.
+  foun10\EasySearch\Core\SynonymConfiguration:
+    class: foun10\EasySearch\Core\SynonymConfiguration
+    public: true
+
+  # Shared by the search page and the category page so both restore the
+  # engine's ranking the same way.
+  foun10\EasySearch\Core\ArticleListFactory:
+    class: foun10\EasySearch\Core\ArticleListFactory
+    public: true
+
+  # One answer to "which languages does this shop serve" - OXID has three
+  # methods for it and two of them ignore the active flag.
+  foun10\EasySearch\Core\ShopLanguages:
+    class: foun10\EasySearch\Core\ShopLanguages
+    public: true
+
+  foun10\EasySearch\Core\SearchResultProvider:
+    class: foun10\EasySearch\Core\SearchResultProvider
+    public: true
+
+  foun10\EasySearch\Core\RequestQueryFactory:
+    class: foun10\EasySearch\Core\RequestQueryFactory
+    public: true
+
+  # Which facets appear, what they are called and how their values render -
+  # shared by both connectors, so a sidebar built from Meilisearch is assembled
+  # by exactly the code that assembles the MySQL one.
+  foun10\EasySearch\Core\FacetAssembler:
+    class: foun10\EasySearch\Core\FacetAssembler
+    public: true
+
+  foun10\EasySearch\Core\AttributeTitles:
+    class: foun10\EasySearch\Core\AttributeTitles
+
+  # Reads the hex code out of "Name_#hexcode" and decides which colour family
+  # it belongs to. Used while indexing, for attributes configured as grouped
+  # colour tiles.
+  foun10\EasySearch\Core\ColorGrouper:
+    class: foun10\EasySearch\Core\ColorGrouper
+    public: true
+
+  # --- Suggest, backend neutral ---
+  #
+  # Term completion works on the correction dictionary and category suggestions
+  # on oxcategories, so neither depends on where the product index lives.
+
+  foun10\EasySearch\Suggest\DictionaryTerms:
+    class: foun10\EasySearch\Suggest\DictionaryTerms
+    public: true
+
+  # --- What customers searched for ---
+  #
+  # public: the writer is reached from the Search model extension, which OXID
+  # builds with oxNew rather than through the container.
+
+  foun10\EasySearch\Log\SearchLogger:
+    class: foun10\EasySearch\Log\SearchLogger
+    public: true
+
+  foun10\EasySearch\Log\SearchLog:
+    class: foun10\EasySearch\Log\SearchLog
+    public: true
+
+  # Sorts scanner payloads out of the log, at both ends: the writer never
+  # stores them, and the backend screen drops whatever was stored before this
+  # existed. public: the report controller is built by oxNew, not by the
+  # container.
+  foun10\EasySearch\Log\TermFilter:
+    class: foun10\EasySearch\Log\TermFilter
+    public: true
+
+  foun10\EasySearch\Suggest\CategorySuggester:
+    class: foun10\EasySearch\Suggest\CategorySuggester
+    public: true
+
+  # --- Text processing and typo tolerance ---
+
+  # public: the report screen normalises a logged term to ask whether a synonym
+  # rule already covers it, and that controller is built by oxNew.
+  foun10\EasySearch\Correction\Normalizer:
+    class: foun10\EasySearch\Correction\Normalizer
+    public: true
+
+  foun10\EasySearch\Correction\DamerauLevenshtein:
+    class: foun10\EasySearch\Correction\DamerauLevenshtein
+
+  foun10\EasySearch\Correction\ColognePhonetic:
+    class: foun10\EasySearch\Correction\ColognePhonetic
+
+  foun10\EasySearch\Correction\SpellCorrector:
+    class: foun10\EasySearch\Correction\SpellCorrector
+    public: true
+
+  # Expansion runs at query time rather than at index time, so a saved rule
+  # takes effect on the next search instead of after the next reindex. Shared
+  # by the condition builder and the spell corrector - the latter asks it which
+  # words a merchant has declared real.
+  foun10\EasySearch\Synonym\SynonymExpander:
+    class: foun10\EasySearch\Synonym\SynonymExpander
+    public: true
+
+  # --- Indexing ---
+  #
+  # DocumentProvider and IndexDocument are backend neutral. Pointing
+  # IndexWriterInterface at a Meilisearch writer is the only change needed to
+  # feed a different engine from the same catalogue reading code.
+
+  # public: the admin reindex controller is built by oxNew, not by the
+  # container, so it has to fetch these itself. A private service is inlined at
+  # compile time and cannot be fetched at all.
+  foun10\EasySearch\Index\DocumentProvider:
+    class: foun10\EasySearch\Index\DocumentProvider
+    public: true
+
+  foun10\EasySearch\Index\DiscountResolver:
+    class: foun10\EasySearch\Index\DiscountResolver
+
+  # Decides FOUN10VISIBLE once per document, so the engine filters one
+  # boolean instead of reassembling the shop's stock rule per query.
+  foun10\EasySearch\Index\VisibilityResolver:
+    class: foun10\EasySearch\Index\VisibilityResolver
+
+  foun10\EasySearch\Index\DictionaryBuilder:
+    class: foun10\EasySearch\Index\DictionaryBuilder
+    public: true
+
+  # What the index tables look like, and which one belongs to which shop.
+  # public: the admin index screen resolves names through it and is built by
+  # oxNew rather than by the container.
+  foun10\EasySearch\Index\MySql\TableSchema:
+    class: foun10\EasySearch\Index\MySql\TableSchema
+
+  foun10\EasySearch\Index\MySql\IndexTables:
+    class: foun10\EasySearch\Index\MySql\IndexTables
+    public: true
+
+  foun10\EasySearch\Index\MySql\MySqlIndexWriter:
+    class: foun10\EasySearch\Index\MySql\MySqlIndexWriter
+
+  foun10\EasySearch\Index\Meili\MeiliIndexWriter:
+    class: foun10\EasySearch\Index\Meili\MeiliIndexWriter
+
+  # public: the reindex command asks for a writer by name, so a rebuild can
+  # fill the backend that is not currently serving.
+  foun10\EasySearch\Index\IndexWriterLocator:
+    class: foun10\EasySearch\Index\IndexWriterLocator
+    public: true
+
+  foun10\EasySearch\Index\ConfiguredIndexWriter:
+    class: foun10\EasySearch\Index\ConfiguredIndexWriter
+
+  # The interface resolves to whatever FOUN10EASYSEARCH_ENGINE says for the active
+  # shop, so the admin reindex fills the backend that shop actually serves.
+  foun10\EasySearch\Index\IndexWriterInterface:
+    alias: foun10\EasySearch\Index\ConfiguredIndexWriter
+    public: true
+
+  # --- Search engine ---
+
+  foun10\EasySearch\Engine\MySql\ConditionBuilder:
+    class: foun10\EasySearch\Engine\MySql\ConditionBuilder
+
+  foun10\EasySearch\Engine\MySql\FacetBuilder:
+    class: foun10\EasySearch\Engine\MySql\FacetBuilder
+
+  foun10\EasySearch\Engine\MySql\MySqlSearchEngine:
+    class: foun10\EasySearch\Engine\MySql\MySqlSearchEngine
+
+  # --- Meilisearch connector ---
+
+  foun10\EasySearch\Meili\MeiliConfiguration:
+    class: foun10\EasySearch\Meili\MeiliConfiguration
+    public: true
+
+  foun10\EasySearch\Meili\MeiliClient:
+    class: foun10\EasySearch\Meili\MeiliClient
+    public: true
+
+  foun10\EasySearch\Meili\IndexSchema:
+    class: foun10\EasySearch\Meili\IndexSchema
+
+  foun10\EasySearch\Engine\Meili\FilterBuilder:
+    class: foun10\EasySearch\Engine\Meili\FilterBuilder
+
+  foun10\EasySearch\Engine\Meili\MeiliFacetBuilder:
+    class: foun10\EasySearch\Engine\Meili\MeiliFacetBuilder
+
+  foun10\EasySearch\Engine\Meili\MeiliSearchEngine:
+    class: foun10\EasySearch\Engine\Meili\MeiliSearchEngine
+
+  foun10\EasySearch\Engine\NullSearchEngine:
+    class: foun10\EasySearch\Engine\NullSearchEngine
+
+  # public: the benchmark command runs the same query through both engines and
+  # needs to ask for them by name.
+  foun10\EasySearch\Engine\EngineLocator:
+    class: foun10\EasySearch\Engine\EngineLocator
+    public: true
+
+  foun10\EasySearch\Engine\ConfiguredSearchEngine:
+    class: foun10\EasySearch\Engine\ConfiguredSearchEngine
+
+  # Aliased to the delegating engine, not to an implementation: which backend
+  # answers is a per subshop setting, read at request time.
+  foun10\EasySearch\Engine\SearchEngineInterface:
+    alias: foun10\EasySearch\Engine\ConfiguredSearchEngine
+    public: true
+
+  # --- Commands ---
+
+  foun10\EasySearch\Command\ReindexCommand:
+    class: foun10\EasySearch\Command\ReindexCommand
+    tags:
+      - { name: 'console.command' }
+
+  foun10\EasySearch\Command\BenchmarkCommand:
+    class: foun10\EasySearch\Command\BenchmarkCommand
+    tags:
+      - { name: 'console.command' }
+
+  foun10\EasySearch\Command\SearchLogCommand:
+    class: foun10\EasySearch\Command\SearchLogCommand
+    tags:
+      - { name: 'console.command' }
+
+  # Reads the server and the index and says what to do about what it finds -
+  # written after a staging afternoon where the answer was one MySQL setting.
+  foun10\EasySearch\Command\DoctorCommand:
+    class: foun10\EasySearch\Command\DoctorCommand
+    tags:
+      - { name: 'console.command' }
+
+  # SuggestController is instantiated by OXID through oxNew, not by the
+  # container, so it pulls its collaborators from ContainerFactory instead of
+  # being registered here. Same for the class extensions.

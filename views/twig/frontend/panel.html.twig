@@ -1,0 +1,109 @@
+{#
+    Example: the filter panel, as an offcanvas.
+
+    Include it once on any page that lists products - the search results, a
+    category, a manufacturer. All three controllers carry the same facet methods,
+    so this partial does not care which one included it:
+
+        {% include "@foun10EasySearch/frontend/panel.html.twig" %}
+
+    An offcanvas at every breakpoint rather than a sidebar on desktop: one
+    control opens everything that narrows the list, and the same markup then
+    serves every listing page without a second layout to keep in step. The
+    button that opens it is in frontend/toolbar.html.twig.
+
+    The id is fixed because only one list is ever on screen, and the toolbar
+    opens this panel by that id. The markup below is Bootstrap 5's offcanvas,
+    which is what OXID 7's own theme uses; swap it for your own drawer if your
+    theme differs - only the id and the classes facets.js looks for matter.
+
+    Without JavaScript the panel still opens and the values still show what is
+    selected; what is lost is the live availability update, and the apply button
+    then just closes the panel. If that matters to you, render
+    frontend/active-filters.html.twig too - those chips are ordinary links and
+    work with no script at all.
+#}
+{% block foun10_easysearch_panel %}
+    {% if oView.hasFoun10Facets() %}
+        <div class="offcanvas offcanvas-end foun10-facets__sheet"
+             tabindex="-1" id="searchFacets" aria-labelledby="searchFacetsLabel">
+
+            <div class="offcanvas-header foun10-facets__sheet-head">
+                <h2 class="offcanvas-title foun10-facets__title" id="searchFacetsLabel">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_FILTER" }) }}
+                </h2>
+
+                <div class="foun10-facets__sheet-actions">
+                    {% if oView.hasFoun10ActiveFilters() %}
+                        <a href="{{ oView.getFoun10FilterResetUrl()|raw }}" rel="nofollow"
+                           class="foun10-facets__reset">
+                            {{ translate({ ident: "FOUN10_EASYSEARCH_FILTER_RESET" }) }}
+                        </a>
+                    {% endif %}
+
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                            aria-label="{{ translate({ ident: "FOUN10_EASYSEARCH_CLOSE" }) }}"></button>
+                </div>
+            </div>
+
+            <div class="offcanvas-body foun10-facets__sheet-body">
+                {% include "@foun10EasySearch/frontend/facets.html.twig" %}
+            </div>
+
+            <div class="foun10-facets__apply">
+                {#
+                    The one navigation of the whole interaction. Its label
+                    carries the count the endpoint last reported, and the script
+                    rewrites it on every change - so the customer sees what the
+                    current selection would yield before committing to it.
+
+                    %s in the translation is replaced with that number.
+                #}
+                <button type="button" class="foun10-facets__apply-button btn btn-primary"
+                        data-bs-dismiss="offcanvas">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_SHOW_RESULTS" })|format(oView.getArticleCount()) }}
+                </button>
+            </div>
+        </div>
+
+        {% block foun10_easysearch_panel_script %}
+            {#
+                The example stylesheet. It styles only the module's own foun10-*
+                classes and takes its colours from the theme's CSS variables, so
+                it drops in without a build step - drop this line once you style
+                the panel yourself.
+            #}
+            {{ style({
+                include: oViewConf.getModuleUrl('foun10EasySearch', 'out/css/frontend.css')
+            }) }}
+
+            {{ script({
+                include: oViewConf.getModuleUrl('foun10EasySearch', 'out/js/facets.js'),
+                dynamic: __oxid_include_dynamic
+            }) }}
+
+            {#
+                context is not optional. It carries what page the panel belongs
+                to - the search term, the category or manufacturer id, a price
+                range - and the endpoint answers for the wrong scope without it:
+                a category page would get the facets of an empty search.
+
+                json_encode rather than hand-quoting, so a label containing an
+                apostrophe cannot break the call.
+            #}
+            {% set foun10FacetOptions = {
+                panelId: 'searchFacets',
+                url: oViewConf.getFoun10FacetUrl(),
+                context: oView.getFoun10FacetContext(),
+                labels: {
+                    showResults: translate({ ident: "FOUN10_EASYSEARCH_SHOW_RESULTS" })
+                }
+            } %}
+
+            {{ script({
+                add: "foun10InitFacets(" ~ foun10FacetOptions|json_encode|raw ~ ");",
+                dynamic: __oxid_include_dynamic
+            }) }}
+        {% endblock %}
+    {% endif %}
+{% endblock %}

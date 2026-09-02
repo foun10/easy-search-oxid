@@ -1,0 +1,4 @@
+table_storage:
+  table_name: oxmigrations_foun10easysearch
+migrations_paths:
+  'foun10\EasySearch\Migrations': data

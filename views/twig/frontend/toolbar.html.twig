@@ -1,0 +1,37 @@
+{#
+    Example: the button that opens the filter panel.
+
+    Place it above the product grid, on every page that includes
+    frontend/panel.html.twig:
+
+        {% include "@foun10EasySearch/frontend/toolbar.html.twig" %}
+
+    It opens the panel by id, so the two belong together - if you rename the
+    panel's id, rename it here as well.
+
+    The badge is the only place the number of active filters appears while the
+    panel is shut, which is most of the time. Without it a customer who filtered,
+    closed the panel and scrolled has no way to tell a short result list from a
+    filtered one.
+
+    Deliberately not carrying a result count: the list below already has one, and
+    a second copy a few pixels away only invites the two to disagree.
+#}
+{% block foun10_easysearch_toolbar %}
+    {% if oView.hasFoun10Facets() %}
+        <div class="foun10-search-toolbar">
+            <button class="foun10-facets__toggle btn btn-outline-secondary" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#searchFacets"
+                    aria-controls="searchFacets">
+                {# Your theme's own icon, if it has one. #}
+                {% include "icons/sliders.svg" ignore missing %}
+
+                <span>{{ translate({ ident: "FOUN10_EASYSEARCH_FILTER" }) }}</span>
+
+                {% if oView.getFoun10ActiveFilterCount() %}
+                    <span class="foun10-facets__badge">{{ oView.getFoun10ActiveFilterCount() }}</span>
+                {% endif %}
+            </button>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{#
+    Example: the "showing results for ..." line above a corrected search.
+
+    Include it at the top of your search result page:
+
+        {% include "@foun10EasySearch/frontend/correction.html.twig" %}
+
+    Small, and the one piece of markup a typo-tolerant search really should not
+    ship without. When the engine corrects a query it answers for a word the
+    customer did not type, and saying so is the difference between a search that
+    looks clever and one that looks broken - especially when the correction is
+    wrong, which is when the escape hatch below matters.
+
+    Only rendered on the search page, because only SearchController carries the
+    correction.
+#}
+{% block foun10_easysearch_correction %}
+{% if oView.getFoun10SearchCorrection() %}
+    {% set correction = oView.getFoun10SearchCorrection() %}
+
+    <p class="foun10-correction">
+        {% if correction.isApplied() %}
+            {#
+                The search was answered for the corrected word. Say which one,
+                and offer the original back - a customer who really meant the
+                unusual spelling has one click to insist on it.
+            #}
+            {{ translate({ ident: "FOUN10_EASYSEARCH_CORRECTION_APPLIED" }) }}
+            <strong>{{ correction.getCorrected() }}</strong>
+
+            <a class="foun10-correction__original"
+               href="{{ oView.getFoun10UncorrectedSearchUrl() }}"
+               rel="nofollow">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_CORRECTION_INSTEAD" }) }}
+                <strong>{{ correction.getOriginal() }}</strong>
+            </a>
+        {% else %}
+            {#
+                The typed word found something, but a near one would find more.
+                An offer rather than a correction, so the current result stays.
+            #}
+            {{ translate({ ident: "FOUN10_EASYSEARCH_CORRECTION_SUGGESTED" }) }}
+            <a href="{{ oViewConf.getSelfActionLink() }}cl=search&amp;searchparam={{ correction.getCorrected()|url_encode }}">
+                <strong>{{ correction.getCorrected() }}</strong>
+            </a>
+        {% endif %}
+    </p>
+{% endif %}
+
+{#
+    Deliberately no headline of its own. The theme already writes one - "40 hits
+    for X" - and a second line saying the same thing is noise. This partial adds
+    only what the theme cannot know: that the results belong to a different word
+    than the one typed.
+
+    If you do want the headline to name the corrected term, the value is
+    oView.getFoun10EffectiveSearchParam(): after an applied correction that is
+    the corrected word, while the theme's own getSearchParamForHtml() still
+    returns what was typed - right for the input field, wrong beside a hit
+    count, which is what makes "294 hits for bluse" read as a lie when bluse
+    itself found nothing.
+#}
+{% endblock %}

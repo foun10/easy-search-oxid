@@ -1,0 +1,82 @@
+{#
+    Example: the facet groups.
+
+    Included by frontend/panel.html.twig rather than used on its own - the panel
+    is what gives these an id, an apply button and the script.
+
+    **Values are not links.** That is the one thing to keep if you rewrite
+    everything else here. The panel collects the selection in the DOM and
+    navigates exactly once, when the customer presses apply; a link per value is
+    a second, competing navigation path, and inside an offcanvas the two race.
+    The way back out is the apply button, and - for a single filter - the chips
+    rendered by frontend/active-filters.html.twig, which *are* links because
+    there the click is the whole interaction.
+
+    The classes carrying behaviour are not decoration. facets.js finds the parts
+    through them and builds the same structure itself for values that were not
+    in the server's markup:
+
+        .foun10-facet[data-facet-id]   one filter group
+        .foun10-facet__values          where its values live
+        [data-value]                   one value; .active = selected
+        .foun10-facet__selected        the per-group count badge
+
+    A value is a colour tile exactly when it carries a hex code. That rule lives
+    here and in createValue() in facets.js, and the two have to agree.
+#}
+{% block foun10_easysearch_facets %}
+    {% set facets = facets|default(oView.getFoun10Facets()) %}
+
+    {% if facets is not empty %}
+        <div class="foun10-facets">
+            {% for facet in facets %}
+                <div class="foun10-facet" data-facet-id="{{ facet.getAttributeId() }}">
+                    <div class="foun10-facet__head">
+                        <span class="foun10-facet__title">{{ facet.getTitle() }}</span>
+
+                        {# Always rendered, hidden while empty: the script counts
+                           the selection client side and needs somewhere to
+                           write it. #}
+                        <span class="foun10-facet__selected"
+                              {% if not facet.hasSelection() %}hidden{% endif %}>
+                            {{ facet.getSelectedValues()|length }}
+                        </span>
+                    </div>
+
+                    <div class="foun10-facet__values variant-select">
+                        {% for value in facet.getValues() %}
+                            {% set colorHexCode = value.getHexCode() %}
+
+                            {#
+                                A value that leads nowhere is rendered but
+                                hidden, never struck through. A column of
+                                crossed-out options reads as a broken shop, and
+                                the information it carries - "this leads
+                                nowhere" - is said more quietly by removing it.
+
+                                It stays in the markup, and keeps its
+                                data-value, because the script brings it back
+                                the moment another selection makes it reachable.
+                            #}
+                            <span class="foun10-facet__value variant-select__item{% if colorHexCode %} foun10-facet__value--color color-tile{% endif %}{% if value.isSelected() %} active{% endif %}"
+                                  {% if not value.isSelectable() and not value.isSelected() %}hidden{% endif %}
+                                  data-value="{{ value.getValueId() }}"
+                                  role="button"
+                                  tabindex="0"
+                                  aria-pressed="{{ value.isSelected() ? 'true' : 'false' }}"
+                                  aria-label="{{ facet.getTitle() }}: {{ value.getLabel() }}"
+                                  title="{{ value.getLabel() }}"
+                                  {% if colorHexCode %}style="background-color: {{ colorHexCode }};"{% endif %}>
+                                {%- if colorHexCode -%}
+                                    &nbsp;
+                                {%- else -%}
+                                    <span class="foun10-facet__label">{{ value.getLabel() }}</span>
+                                {%- endif -%}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

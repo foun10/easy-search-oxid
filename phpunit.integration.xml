@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap-integration.php"
+         colors="true"
+         cacheResultFile=".phpunit.cache/integration-results"
+         failOnWarning="true"
+         failOnRisky="true">
+    <!--
+        Separate config from phpunit.xml because these tests need a different bootstrap: the
+        shop's, not just the module's autoloader. PHPUnit allows only one bootstrap per config.
+    -->
+    <testsuites>
+        <testsuite name="integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
+</phpunit>

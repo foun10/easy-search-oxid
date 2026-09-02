@@ -1,0 +1,144 @@
+{
+    // Mutation testing for the shop-independent logic.
+    //
+    // Scoped to the directories the unit suite actually reaches. Of the 80
+    // classes in src/, 41 touch Registry, oxNew, the DI container or the
+    // database and are covered by the integration suite instead - including
+    // every one of them here would make the metrics consist almost entirely of
+    // uncovered mutants and say nothing about the tests that exist.
+    //
+    // Infection runs as a PHAR rather than a require-dev dependency: it needs
+    // its own PHP constraints, and pinning it here would drag the module's
+    // dependency tree around with it.
+    "source": {
+        "directories": [
+            "src/Correction",
+            "src/Log",
+            "src/Core",
+            "src/Synonym",
+            "src/Engine/Query",
+            "src/Engine/Result",
+            "src/Engine/Meili",
+            "src/Command",
+            "src/Index",
+            "src/Controller"
+        ],
+        "excludes": [
+            // Everything below reads the database, the DI container or the OXID
+            // registry, and is covered by the integration suite instead.
+            // Mutating it here would only produce uncovered mutants and drag
+            // the score down without saying anything about the tests.
+            "SearchLog.php",
+            "SearchLogger.php",
+            "AttributeConfiguration.php",
+            "AttributeTitles.php",
+            "SynonymConfiguration.php",
+            "ArticleListFactory.php",
+            "DatabaseHelper.php",
+            "SearchResultProvider.php",
+            "SynonymExpander.php",
+            // src/Index: what is left here still reads the database or the DI
+            // container directly. Both writers, VisibilityResolver and
+            // DocumentProvider are in - their contact with the shop goes
+            // through protected methods a test can stand in for, and the Meili
+            // writer's contact with the search server goes through an injected
+            // client. IndexDocument and RebuildResult are value objects and
+            // could join them; they are only exercised through the writers'
+            // tests so far.
+            "ConfiguredIndexWriter.php",
+            "DictionaryBuilder.php",
+            "DiscountResolver.php",
+            "IndexDocument.php",
+            "IndexWriterLocator.php",
+            "RebuildResult.php",
+            "IndexTables.php",
+            "TableSchema.php"
+            // src/Command has no exclusions left: all four commands are unit
+            // tested, DoctorCommand through seams for the database, the search
+            // engine and the clock.
+            //
+            // src/Controller has none either - the four admin screens and the
+            // two JSON endpoints are all in. Extending OXID's AdminController
+            // or FrontendController turned out not to be the obstacle it looks
+            // like: they use nothing from their parent but the template
+            // property, so tests/Stub holds almost empty stand-ins and they are
+            // testable exactly as they are. Those stand-ins are also why
+            // "bootstrap" is set below - Infection reflects on each class in
+            // its own process, where PHPUnit's bootstrap has not run.
+            //
+            // src/Extension is deliberately not in the scope at all. Those
+            // three classes extend `*_parent`, which the unified namespace
+            // generator creates when the module is activated and which exists
+            // only in a live installation - and they genuinely call into it
+            // (parent::loadArticles(), parent::getBaseLink(), the shop's
+            // getSortingSql()). Standing in for that would mean inventing the
+            // shop's behaviour and then testing the invention, so they belong
+            // to the integration suite.
+        ]
+    },
+    "mutators": {
+        "@default": true,
+
+        // The thresholds are deliberate, documented trade-offs rather than
+        // arbitrary numbers, and the tests pin them by value. Mutating them
+        // produces mutants that are "killed" only in the sense that the pinned
+        // value changed - which proves nothing the assertions do not already.
+        "IncrementInteger": {
+            "ignore": [
+                "foun10\\EasySearch\\Correction\\DamerauLevenshtein::getMaxDistanceForLength"
+            ]
+        },
+        "DecrementInteger": {
+            "ignore": [
+                "foun10\\EasySearch\\Correction\\DamerauLevenshtein::getMaxDistanceForLength"
+            ]
+        }
+    },
+    // The gate in composer.json sits at 82 % covered MSI. The suite stands at
+    // 84 % (measured 2026-09-02, with every class in src/Command and
+    // src/Controller in the scope), so there are two points of headroom -
+    // deliberately, because a gate set to exactly today's number breaks the
+    // build the moment a new class joins. It exists to stop regressions, not to
+    // certify the code as done: raise it when the number rises, and do not
+    // chase it by padding assertions.
+    //
+    // ReindexCommand (73 %), SearchLogCommand (77 %), DocumentProvider (81 %),
+    // BenchmarkCommand (83 %), MeiliIndexWriter (83 %), MeiliSearchEngine
+    // (83 %), FacetController and SuggestController (85 % together),
+    // SearchLogController (85 %), DoctorCommand (85 %), MeiliFacetBuilder
+    // (85 %) and IndexController (86 %) sit at or below the average, and
+    // the reason is worth knowing before anyone tries to fix it: their escaped
+    // mutants are almost entirely casts on values that arrive from outside -
+    // $row['OXID'] from the database, $document['id'] from a JSON response -
+    // plus ProtectedVisibility on the seams, which no test can kill by design.
+    // The casts are right (the module declares strict_types, and a driver or a
+    // server handing back the wrong type would be a TypeError further down),
+    // but no honest test data kills them, because MySQL hands varchar columns
+    // over as strings and Meilisearch answers with the types it was given.
+    // Tests that feed ints through those arrays would raise the number and
+    // prove nothing.
+    //
+    // Everything in the scope above is now unit tested, including the ones
+    // that looked least likely to be - RequestQueryFactory, DocumentProvider,
+    // the two index writers and the whole Meilisearch engine, which has no
+    // exclusions left. MySqlIndexWriter is almost nothing but SQL
+    // and still reaches 88 % covered MSI, because what matters in it is the
+    // order of the statements, not their syntax. Note what that took:
+    // most of these classes looked like they needed a shop, and did not. Two
+    // patterns cover almost all of them - collaborators arrive through the
+    // constructor and can simply be mocked, or the shop contact is isolated in
+    // a protected method that a Testable* subclass overrides (see
+    // tests/Unit/Double). SpellCorrector is the example worth copying: five
+    // injected collaborators and exactly two protected data-access seams.
+    // The same bootstrap the suite uses. Infection reflects on each class
+    // before it mutates anything, and it does that in its own process - with
+    // only the module autoloader, the admin controllers' parent class cannot be
+    // resolved and the run dies on the first of them. PHPUnit never had the
+    // problem because its bootstrap loads the stand-ins; this hands Infection
+    // the same ones.
+    "bootstrap": "tests/bootstrap-unit.php",
+    "logs": {
+        "text": "infection.log"
+    },
+    "tmpDir": ".infection"
+}

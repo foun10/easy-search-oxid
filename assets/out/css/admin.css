@@ -1,0 +1,877 @@
+/**
+ * foun10 -> Suche -> Attribute
+ *
+ * The OXID admin theme brings very little layout, so this screen styles itself.
+ * Colours stay neutral greys rather than borrowing a shop palette - the backend
+ * is shared by four subshops with four different brands.
+ */
+.foun10-admin {
+    padding: 1rem 1.25rem 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #272727;
+}
+
+.foun10-admin h1 {
+    font-size: 1.35rem;
+    margin: 0 0 0.35rem;
+}
+
+.foun10-admin__intro {
+    margin: 0 0 1.25rem;
+    font-size: 0.85rem;
+    color: #6a6a6a;
+    max-width: 60rem;
+}
+
+.foun10-admin__columns {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.foun10-admin__column {
+    flex: 1 1 260px;
+    min-width: 240px;
+}
+
+/* The configured list carries two checkboxes per row and needs the room */
+.foun10-admin__column--wide {
+    flex: 2 1 420px;
+}
+
+.foun10-admin__column-title {
+    font-size: 0.95rem;
+    margin: 0 0 0.2rem;
+}
+
+.foun10-admin__column-hint {
+    margin: 0 0 0.6rem;
+    font-size: 0.75rem;
+    color: #8a8a8a;
+    min-height: 2.4em;
+}
+
+.foun10-admin__list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    background: #f6f6f6;
+    border: 1px solid #dedede;
+    border-radius: 4px;
+
+    /* A shop with 40+ attributes would otherwise push the save button far below
+       the fold, so each list scrolls inside a fixed frame instead. */
+    height: 40rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Visible drop target while dragging - without it the interaction feels blind */
+.foun10-admin__list.is-over {
+    border-color: #7a9cc6;
+    background: #eef3fa;
+}
+
+.foun10-admin__item {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.5rem;
+    padding: 0.45rem 0.6rem;
+    margin-bottom: 0.35rem;
+    background: #fff;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    cursor: grab;
+}
+
+.foun10-admin__item:last-child {
+    margin-bottom: 0;
+}
+
+.foun10-admin__item.is-dragging {
+    opacity: 0.45;
+    cursor: grabbing;
+}
+
+.foun10-admin__grip {
+    color: #b4b4b4;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Title over sample values, so a row stays one scannable line pair */
+.foun10-admin__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.foun10-admin__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Example values: context, not a label - it must not compete with the title */
+.foun10-admin__sample {
+    font-size: 0.7rem;
+    color: #8a8a8a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.foun10-admin__empty {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    color: #a4a4a4;
+    font-style: italic;
+}
+
+.foun10-admin__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+
+    /* Stays reachable no matter how far either list is scrolled */
+    position: sticky;
+    bottom: 0;
+    padding: 0.75rem 0;
+    background: #fff;
+    border-top: 1px solid #dedede;
+}
+
+.foun10-admin__save {
+    padding: 0.55rem 1.4rem;
+    border: 0;
+    border-radius: 3px;
+    background: #4a7bb5;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.foun10-admin__save:hover {
+    background: #3d6699;
+}
+
+.foun10-admin__hint {
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+/* Role checkboxes sit at the right hand end of a configured row */
+.foun10-admin__item--configured {
+    justify-content: space-between;
+
+    /* The per attribute settings go on their own line underneath: a select and
+       one label field per language do not fit beside the title, and squeezing
+       them in made every row unreadable. */
+    flex-wrap: wrap;
+}
+
+.foun10-admin__config {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem 0.75rem;
+
+    /* Full width, so it always starts a new line inside the row */
+    flex: 1 0 100%;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #ededed;
+}
+
+.foun10-admin__config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1 1 9rem;
+    min-width: 0;
+}
+
+.foun10-admin__config-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #8a8a8a;
+}
+
+.foun10-admin__config select,
+.foun10-admin__config input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.8rem;
+    font-family: inherit;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.foun10-admin__config select:focus,
+.foun10-admin__config input[type="text"]:focus {
+    outline: none;
+    border-color: #7a9cc6;
+}
+
+.foun10-admin__config input::placeholder {
+    color: #b4b4b4;
+}
+
+.foun10-admin__roles {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+    padding-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.foun10-admin__role {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #4a4a4a;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.foun10-admin__role input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.foun10-admin__reindex {
+    padding: 0.55rem 1.4rem;
+    border: 1px solid #4a7bb5;
+    border-radius: 3px;
+    background: #fff;
+    color: #4a7bb5;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.foun10-admin__reindex:hover {
+    background: #eef3fa;
+}
+
+/* Index status table: a count with the time it was written underneath */
+.foun10-status__count {
+    display: block;
+    font-size: 0.95rem;
+}
+
+.foun10-status__when {
+    display: block;
+    font-size: 0.7rem;
+    color: #8a8a8a;
+}
+
+/* One row per rebuild: the button, how long it takes, and the change that
+   makes it necessary. The description is the point of the screen - a button
+   labelled by what it rebuilds is useless to somebody who only knows what they
+   changed. */
+.foun10-tasks {
+    margin-top: 1.25rem;
+}
+
+.foun10-tasks__row {
+    padding: 0.75rem 0;
+    border-top: 1px solid #ededed;
+}
+
+.foun10-tasks__row--full {
+    border-top: 1px solid #dedede;
+    margin-top: 0.5rem;
+}
+
+.foun10-tasks__action {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Fixed width so the descriptions underneath line up down the column */
+.foun10-tasks__action .foun10-admin__reindex,
+.foun10-tasks__action .foun10-admin__save {
+    min-width: 17rem;
+    text-align: center;
+}
+
+.foun10-tasks__takes {
+    font-size: 0.75rem;
+    color: #8a8a8a;
+    white-space: nowrap;
+}
+
+.foun10-tasks__when {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #6a6a6a;
+    max-width: 52rem;
+}
+
+.foun10-tasks__when strong {
+    color: #272727;
+}
+
+.foun10-admin__note {
+    margin: 1.25rem 0 0;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+    color: #4a4a4a;
+    background: #f6f6f6;
+    border-left: 3px solid #7a9cc6;
+    border-radius: 0 3px 3px 0;
+    max-width: 52rem;
+}
+
+/* Progress modal for the batched reindex */
+.foun10-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.foun10-modal[hidden] {
+    display: none;
+}
+
+.foun10-modal__box {
+    width: min(28rem, calc(100vw - 2rem));
+    padding: 1.25rem 1.5rem 1.5rem;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.foun10-modal__box--busy {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    padding-bottom: 1.25rem;
+}
+
+.foun10-modal__box--busy .foun10-modal__title {
+    margin-bottom: 0.35rem;
+}
+
+.foun10-modal__box--busy .foun10-modal__note {
+    margin: 0;
+}
+
+/* Without a note under it the title carries the box on its own, so the gap
+   meant to separate the two would just hang below it. */
+.foun10-modal__box--busy .foun10-modal__title:only-child {
+    margin-bottom: 0;
+}
+
+.foun10-spinner {
+    flex: none;
+    width: 1.4rem;
+    height: 1.4rem;
+    margin-top: 0.1rem;
+    border: 2px solid #d6dde6;
+    border-top-color: #3b6ea5;
+    border-radius: 50%;
+    animation: foun10-spin 0.7s linear infinite;
+}
+
+@keyframes foun10-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .foun10-spinner {
+        animation-duration: 2s;
+    }
+}
+
+.foun10-modal__title {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+}
+
+.foun10-modal__progress {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+
+.foun10-modal__status {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #4a4a4a;
+    min-height: 1.2em;
+}
+
+/* A run with no per-batch progress spins instead of pretending to fill a bar */
+.foun10-modal.is-busy .foun10-modal__bar {
+    display: none;
+}
+
+.foun10-modal__bar {
+    height: 0.55rem;
+    background: #ededed;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.foun10-modal__bar-fill {
+    height: 100%;
+    width: 0;
+    background: #4a7bb5;
+    transition: width 0.2s ease-out;
+}
+
+.foun10-modal.is-failed .foun10-modal__bar-fill {
+    background: #b5484a;
+}
+
+.foun10-modal__note {
+    margin: 0.75rem 0 0;
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+.foun10-modal__actions {
+    margin-top: 1rem;
+    text-align: right;
+}
+
+.foun10-modal__close {
+    padding: 0.45rem 1.2rem;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.foun10-modal__close[disabled] {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/**
+ * foun10 -> Suche -> Synonyme
+ *
+ * A plain edit table rather than the drag lists of the attribute screen: the
+ * order of synonym rules carries no meaning, so there is nothing to arrange.
+ */
+.foun10-admin__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.foun10-admin__language {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.foun10-admin__language select {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.foun10-admin__saved {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #2f6b3a;
+    background: #eef7f0;
+    border: 1px solid #cfe4d4;
+    border-radius: 3px;
+}
+
+.foun10-rules {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    background: #fff;
+    border: 1px solid #dedede;
+    border-radius: 4px;
+}
+
+.foun10-rules th {
+    text-align: left;
+    font-weight: normal;
+    font-size: 0.75rem;
+    color: #6a6a6a;
+    padding: 0.5rem 0.6rem;
+    background: #f6f6f6;
+    border-bottom: 1px solid #dedede;
+}
+
+.foun10-rules td {
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid #ededed;
+    vertical-align: middle;
+}
+
+.foun10-rules tr:last-child td {
+    border-bottom: 0;
+}
+
+.foun10-rules__center {
+    text-align: center;
+}
+
+/* The two narrow columns are sized so the synonym field keeps the rest */
+.foun10-rules__col-type {
+    width: 11rem;
+}
+
+.foun10-rules__col-term {
+    width: 22%;
+}
+
+.foun10-rules__col-active,
+.foun10-rules__col-remove {
+    width: 4.5rem;
+    text-align: center;
+}
+
+.foun10-rules input[type="text"],
+.foun10-rules select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.foun10-rules input[type="text"]:focus,
+.foun10-rules select:focus {
+    outline: none;
+    border-color: #7a9cc6;
+}
+
+.foun10-rules input::placeholder {
+    color: #b4b4b4;
+}
+
+.foun10-rules__remove {
+    width: 1.6rem;
+    height: 1.6rem;
+    line-height: 1;
+    padding: 0;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+    color: #8a8a8a;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.foun10-rules__remove:hover {
+    border-color: #b5484a;
+    color: #b5484a;
+}
+
+/* Header label for the remove column: needed by a screen reader, noise on screen */
+.foun10-rules__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   foun10 -> Suche -> Auswertung
+
+   A read-only screen: numbers, one chart, two lists. Same neutral greys as the
+   rest of the backend, with one accent for searches and one for the share of
+   them that found nothing - those two are the only colours that carry meaning
+   here, so nothing else is allowed to be colourful.
+   --------------------------------------------------------------------------- */
+.foun10-admin__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: #4a4a4a;
+}
+
+.foun10-kpi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0 0 1.25rem;
+}
+
+.foun10-kpi__card {
+    flex: 1 1 10rem;
+    min-width: 9rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #dedede;
+    border-left: 3px solid #7a9cc6;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.foun10-kpi__card--warn {
+    border-left-color: #b5484a;
+}
+
+.foun10-kpi__value {
+    display: block;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    font-weight: bold;
+}
+
+.foun10-kpi__label {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: #4a4a4a;
+}
+
+.foun10-kpi__hint {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: #8a8a8a;
+}
+
+.foun10-chart {
+    margin: 0 0 1.5rem;
+    padding: 0.85rem 1rem 0.6rem;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.foun10-chart__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.foun10-chart__title {
+    font-size: 0.95rem;
+    margin: 0 0 0.6rem;
+}
+
+.foun10-chart__legend {
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+.foun10-chart__key {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin: 0 0.25rem 0 0.9rem;
+    border-radius: 2px;
+    vertical-align: -1px;
+}
+
+.foun10-chart__key--total {
+    background: #7a9cc6;
+}
+
+.foun10-chart__key--zero {
+    background: #b5484a;
+}
+
+.foun10-chart__plot {
+    position: relative;
+    padding-left: 3rem;
+}
+
+/* One label, on the tallest bar: a full axis would need gridlines to be worth
+   anything, and the exact numbers are on the bars themselves. */
+.foun10-chart__scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 0.72rem;
+    color: #8a8a8a;
+}
+
+.foun10-chart__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 9rem;
+    border-bottom: 1px solid #dedede;
+}
+
+.foun10-chart__slot {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    min-width: 0;
+}
+
+.foun10-chart__column {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+}
+
+.foun10-chart__bar {
+    position: relative;
+    width: 100%;
+    background: #7a9cc6;
+    border-radius: 2px 2px 0 0;
+    transition: background 0.15s;
+}
+
+.foun10-chart__slot:hover .foun10-chart__bar {
+    background: #5d84b3;
+}
+
+/* The days before the reported period, drawn faint: they are context, not the
+   numbers the cards above are about. */
+.foun10-chart__slot.is-context .foun10-chart__bar {
+    background: #c3d2e3;
+}
+
+/* The share of the day that found nothing, sitting at the foot of the bar
+   because it is a part of it and not a second measurement. */
+.foun10-chart__zero {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: #b5484a;
+    border-radius: 0 0 2px 2px;
+}
+
+.foun10-chart__label {
+    margin-top: 0.3rem;
+    font-size: 0.65rem;
+    color: #8a8a8a;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.foun10-chart__note {
+    margin: 0.6rem 0 0;
+    font-size: 0.72rem;
+    color: #8a8a8a;
+}
+
+.foun10-lists {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.foun10-lists__block {
+    flex: 1 1 26rem;
+    min-width: 22rem;
+}
+
+.foun10-lists__title {
+    font-size: 0.95rem;
+    margin: 0 0 0.2rem;
+}
+
+.foun10-lists__hint {
+    margin: 0 0 0.6rem;
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+.foun10-log td {
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
+
+.foun10-log__number {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.foun10-log__number--zero {
+    color: #b5484a;
+    font-weight: bold;
+}
+
+.foun10-log__action {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.foun10-log__action form {
+    margin: 0;
+}
+
+.foun10-log__synonym {
+    padding: 0.25rem 0.55rem;
+    border: 1px solid #dedede;
+    border-radius: 3px;
+    background: #fff;
+    color: #4a4a4a;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.foun10-log__synonym:hover {
+    border-color: #7a9cc6;
+    color: #35506e;
+}
+
+/* Why a row was kept out of the lists, shown only when they are asked for */
+.foun10-log__flag {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0 0.35rem;
+    border-radius: 2px;
+    background: #f2e3e3;
+    color: #b5484a;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* A zero hit term that already has a rule: the row stays until the word is
+   searched again, so it says why rather than inviting a second rule. */
+.foun10-log__has-synonym {
+    display: inline-block;
+    margin-right: 0.4rem;
+    font-size: 0.7rem;
+    color: #5a7a5a;
+}

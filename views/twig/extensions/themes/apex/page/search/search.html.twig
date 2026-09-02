@@ -1,0 +1,78 @@
+{#
+    Puts the search page's filter panel in place without the theme being touched.
+
+    OXID 7 resolves this by directory convention: a file under
+    views/twig/extensions/themes/<theme>/<the shop template's own path> joins
+    that template's inheritance chain.
+
+    Deliberately under `apex` rather than under `default`, which would apply to
+    every theme. Both halves of this are apex's: the block names it happens to
+    use, and the markup and stylesheet that were shaped against it. A different
+    theme naming its blocks differently would get nothing, and one that named
+    them the same would get markup built for someone else's layout - the second
+    being the worse of the two, because it looks like it worked.
+
+    So on another theme this file is a **worked example**: copy the directory to
+    your own theme's id, point the blocks at the ones your theme defines, and
+    keep or replace the partials it includes.
+
+    Every block calls parent() first, so the theme renders exactly what it
+    rendered before and the module's markup follows.
+#}
+{% extends "page/search/search.html.twig" %}
+
+{% block search_header %}
+    {{ parent() }}
+
+    {# Only the correction line here - it explains the result as a whole and
+       belongs with the headline. The guard keeps an empty container out of the
+       markup on the ordinary case, which is every search spelled correctly. #}
+    {% if oView.getFoun10SearchCorrection() %}
+        <div class="container-xxl">
+            {% include "@foun10EasySearch/frontend/correction.html.twig" %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block search_results %}
+    {#
+        The chips, for the case where the filter matched nothing.
+
+        The theme renders its whole locator row only when there are results, so
+        on an empty result there is no row to sit below - and that is precisely
+        when a customer needs to see and undo what they picked, rather than be
+        left on an empty page with only the browser's back button.
+
+        Guarded on getArticleList() rather than on getArticleCount(), because
+        that is the condition the theme itself puts around the product block
+        below. Using the count instead renders the chips twice on an empty
+        result: the list is an object and stays truthy even with nothing in it.
+    #}
+    {% if not oView.getArticleList() %}
+        <div class="container-xxl">
+            {% include "@foun10EasySearch/frontend/active-filters.html.twig" %}
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+
+    {# An offcanvas, so it can sit at the end of the page regardless of where
+       the button that opens it ended up. #}
+    {% include "@foun10EasySearch/frontend/panel.html.twig" %}
+{% endblock %}
+
+{% block search_list_productlist %}
+    {#
+        The chips in the normal case: directly below the locator row and above
+        the products, spanning the full width.
+
+        A col-12 rather than a bare div because this block's content are the
+        children of the theme's grid row - anything else there would be laid out
+        as if it were a product column.
+    #}
+    <div class="col-12">
+        {% include "@foun10EasySearch/frontend/active-filters.html.twig" %}
+    </div>
+
+    {{ parent() }}
+{% endblock %}

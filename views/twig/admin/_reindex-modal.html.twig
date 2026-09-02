@@ -1,0 +1,55 @@
+{#
+    Progress modal for a reindex run, shared by both screens that can start one.
+
+    Driven by the tick loop in out/js/admin-reindex.js: the script fills the
+    status line and the bar, and only enables the close button once the run has
+    finished or failed - closing mid-run would leave the rebuild half done with
+    nothing left to continue it.
+#}
+<div class="foun10-modal" id="foun10ReindexModal" hidden>
+    <div class="foun10-modal__box" role="dialog" aria-modal="true" aria-labelledby="foun10ModalTitle">
+        <h2 class="foun10-modal__title" id="foun10ModalTitle">
+            {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_RUNNING" }) }}
+        </h2>
+
+        {# A spinner for phases that report no progress, a bar for the one that
+           does. Showing a bar for a single call means it sits at zero and then
+           jumps to full, which says less than nothing. #}
+        <div class="foun10-modal__progress">
+            <span class="foun10-spinner" id="foun10ReindexSpinner" aria-hidden="true" hidden></span>
+            <p class="foun10-modal__status" id="foun10ReindexStatus"></p>
+        </div>
+
+        <div class="foun10-modal__bar" id="foun10ReindexBarWrap">
+            <div class="foun10-modal__bar-fill" id="foun10ReindexBar"></div>
+        </div>
+
+        <p class="foun10-modal__note">{{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_NOTE" }) }}</p>
+
+        <div class="foun10-modal__actions">
+            <button type="button" class="foun10-modal__close" id="foun10ReindexClose" disabled>
+                {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_CLOSE" }) }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inlined on purpose: the script() twig helper only emits what it collects
+    // where the layout renders it, from bottomitem.html.twig. A module admin
+    // template does not include that, so a collected snippet is simply dropped
+    // and the buttons end up wired to nothing.
+    foun10InitReindex({
+        labels: {
+            progress: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_PROGRESS" })|json_encode|raw }},
+            done: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_DONE" })|json_encode|raw }},
+            doneCategories: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_DONE_CATEGORIES" })|json_encode|raw }},
+            doneDictionary: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_DONE_DICTIONARY" })|json_encode|raw }},
+            doneSimple: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_DONE_SIMPLE" })|json_encode|raw }},
+            failed: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_FAILED" })|json_encode|raw }},
+            categories: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_CATEGORIES" })|json_encode|raw }},
+            dictionary: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_DICTIONARY" })|json_encode|raw }},
+            clearing: {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_REINDEX_CLEARING" })|json_encode|raw }}
+        }
+    });
+</script>

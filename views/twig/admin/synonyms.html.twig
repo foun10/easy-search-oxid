@@ -1,0 +1,154 @@
+{#
+    foun10 -> Suche -> Synonyme
+
+    One table of rules for one shop and one language. The language selector
+    reloads the screen, because the rules of a language are a separate list -
+    editing them all at once would mean rendering every language's rows and
+    submitting the lot.
+
+    Rows are plain form fields named rules[n][...]. PHP rebuilds them as an
+    array in document order, so removing a row is just removing an element -
+    nothing has to be renumbered, and the indices only need to stay unique.
+#}
+{% set assetVersion = '2' %}
+
+<link href="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/css/admin.css')|raw }}?v={{ assetVersion }}" rel="stylesheet">
+
+{% set savedCount = oView.getSavedCount() %}
+{% set editLangId = oView.getEditLanguageId() %}
+{% set handedOver = oView.getHandedOverTerm() %}
+
+<div class="foun10-admin">
+    <h1>{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_HEADLINE" }) }}</h1>
+    <p class="foun10-admin__intro">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_INTRO" }) }}</p>
+
+    {# Escaped before it is handed to translate(): the twig function is declared
+       html safe, so whatever goes into args is written out as it stands. The
+       term comes from the report screen, and the report screen shows what
+       customers typed. #}
+    {% if handedOver %}
+        <p class="foun10-admin__saved">
+            {{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_PREFILLED", args: handedOver|e('html') }) }}
+        </p>
+    {% endif %}
+
+    {% if savedCount is not null %}
+        <p class="foun10-admin__saved">
+            {{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_SAVED", args: savedCount }) }}
+        </p>
+    {% endif %}
+
+    <form name="myedit" id="foun10SynonymForm" method="post" action="{{ oViewConf.getSelfLink()|raw }}">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="foun10easysearchsynonyms">
+        <input type="hidden" name="fnc" value="save">
+        <input type="hidden" name="synonymLang" value="{{ editLangId }}">
+
+        <div class="foun10-admin__toolbar">
+            <label class="foun10-admin__language">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_LANGUAGE" }) }}
+
+                <select id="foun10SynonymLanguage">
+                    {% for language in oView.getLanguages() %}
+                        <option value="{{ language.id }}"{% if language.id == editLangId %} selected{% endif %}>
+                            {{ language.label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <span class="foun10-admin__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_LANGUAGE_HINT" }) }}</span>
+        </div>
+
+        <table class="foun10-rules" id="foun10SynonymRules">
+            <thead>
+                <tr>
+                    <th class="foun10-rules__col-type">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_TYPE" }) }}</th>
+                    <th class="foun10-rules__col-term">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_TERM" }) }}</th>
+                    <th>{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_SYNONYMS" }) }}</th>
+                    <th class="foun10-rules__col-active">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_ACTIVE" }) }}</th>
+                    <th class="foun10-rules__col-remove"><span class="foun10-rules__sr">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_REMOVE" }) }}</span></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for rule in oView.getRules() %}
+                    <tr class="foun10-rules__row">
+                        <td>
+                            <select name="rules[{{ loop.index0 }}][type]" class="foun10-rules__type">
+                                {% for type in oView.getTypes() %}
+                                    <option value="{{ type.value }}"{% if type.value == rule.type %} selected{% endif %}>
+                                        {{ type.label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        <td>
+                            <input type="text" name="rules[{{ loop.index0 }}][term]" value="{{ rule.term }}"
+                                   placeholder="{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_TERM_PLACEHOLDER" }) }}">
+                        </td>
+
+                        <td>
+                            <input type="text" name="rules[{{ loop.index0 }}][synonyms]" value="{{ rule.synonyms }}"
+                                   placeholder="{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_SYNONYMS_PLACEHOLDER" }) }}">
+                        </td>
+
+                        <td class="foun10-rules__center">
+                            {# The hidden field is what actually posts: a cleared
+                               checkbox sends nothing, and the row would come back
+                               active on every save. #}
+                            <input type="hidden" name="rules[{{ loop.index0 }}][active]" value="{{ rule.active ? '1' : '0' }}">
+                            <input type="checkbox" class="foun10-rules__active"{% if rule.active %} checked{% endif %}>
+                        </td>
+
+                        <td class="foun10-rules__center">
+                            <button type="button" class="foun10-rules__remove"
+                                    title="{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_REMOVE" }) }}">&times;</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="foun10-admin__actions">
+            <button type="submit" class="foun10-admin__save" id="foun10SynonymSave">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_SAVE" }) }}
+            </button>
+
+            <button type="button" class="foun10-admin__reindex" id="foun10SynonymAdd">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_ADD" }) }}
+            </button>
+
+            <span class="foun10-admin__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_NO_REINDEX" }) }}</span>
+        </div>
+    </form>
+
+    {# Shown while the browser waits for the saved page to come back. No note
+       about waiting: saving a handful of rows is quick, and promising a delay
+       that does not happen is its own kind of wrong. #}
+    <div class="foun10-modal" id="foun10SynonymSaveOverlay" hidden>
+        <div class="foun10-modal__box foun10-modal__box--busy" role="status" aria-live="polite">
+            <span class="foun10-spinner" aria-hidden="true"></span>
+
+            <div>
+                <h2 class="foun10-modal__title">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_ADMIN_SAVING" }) }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/admin-synonyms.js')|raw }}?v={{ assetVersion }}"></script>
+
+<script>
+    // Inlined for the same reason as on the attribute screen: the script() twig
+    // helper only emits what it collects where bottomitem.html.twig renders it,
+    // and a module admin template never includes that.
+    foun10InitSynonyms({
+        labels: {
+            unsaved: {{ translate({ ident: "FOUN10_EASYSEARCH_SYNONYM_UNSAVED" })|json_encode|raw }}
+        }
+    });
+</script>

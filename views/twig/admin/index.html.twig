@@ -1,0 +1,138 @@
+{#
+    foun10 -> Suche -> Index
+
+    What the index currently holds for one language, and the buttons to rebuild
+    it.
+
+    Language is a switch rather than a column, because the buttons act on the
+    selected one. A table listing every language beside buttons that rebuild a
+    single scope would invite exactly the wrong conclusion.
+
+    Each button names the phases it drives through data-phases, and is described
+    by what has to have changed for you to need it - not by which tables it
+    touches. Somebody who reassigned a manufacturer should not have to know that
+    manufacturers live on the product document to work out which button that is.
+#}
+{% set assetVersion = '7' %}
+
+<link href="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/css/admin.css')|raw }}?v={{ assetVersion }}" rel="stylesheet">
+
+{% set status = oView.getIndexStatus() %}
+{% set editLangId = oView.getEditLanguageId() %}
+{% set scope = oView.getSelectedScope()|json_encode %}
+{% set phaseSets = oView.getPhaseSets() %}
+{% set selfLink = oViewConf.getSelfLink() %}
+{% set never = "FOUN10_EASYSEARCH_INDEX_NEVER"|translate %}
+
+<div class="foun10-admin">
+    <h1>{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_HEADLINE" }) }}</h1>
+    <p class="foun10-admin__intro">{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_INTRO" }) }}</p>
+
+    {# Its own form so the switch can post rather than build a URL: the form
+       already carries the session token and the class, and an empty fnc means
+       the controller renders instead of doing anything. #}
+    <form name="myedit" id="foun10IndexForm" method="post" action="{{ selfLink|raw }}">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="foun10easysearchreindex">
+        <input type="hidden" name="fnc" value="">
+        <input type="hidden" name="indexLang" value="{{ editLangId }}">
+
+        <div class="foun10-admin__toolbar">
+            <label class="foun10-admin__language">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_LANGUAGE" }) }}
+
+                <select data-language-switch>
+                    {% for language in oView.getLanguages() %}
+                        <option value="{{ language.id }}"{% if language.id == editLangId %} selected{% endif %}>
+                            {{ language.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <span class="foun10-admin__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_LANGUAGE_HINT" }) }}</span>
+        </div>
+    </form>
+
+    <table class="foun10-rules foun10-status">
+        <thead>
+            <tr>
+                <th>{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_DOCUMENTS" }) }}</th>
+                <th>{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_CATEGORIES" }) }}</th>
+                <th>{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_TERMS" }) }}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr class="foun10-rules__row">
+                {# The count carries the timestamp underneath: a scope that was
+                   never built has no timestamp to show, and "0" is the answer. #}
+                <td>
+                    <span class="foun10-status__count">{{ status.documents }}</span>
+                    <span class="foun10-status__when">{{ status.documentsAt ?: never }}</span>
+                </td>
+
+                <td>
+                    <span class="foun10-status__count">{{ status.categories }}</span>
+                    <span class="foun10-status__when">{{ status.categoriesAt ?: never }}</span>
+                </td>
+
+                <td>
+                    <span class="foun10-status__count">{{ status.terms }}</span>
+                    <span class="foun10-status__when">{{ status.termsAt ?: never }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="foun10-tasks">
+        {% for task in [
+            { phases: phaseSets.categories, label: "FOUN10_EASYSEARCH_INDEX_RUN_CATEGORIES",
+              when: "FOUN10_EASYSEARCH_INDEX_WHEN_CATEGORIES", takes: "FOUN10_EASYSEARCH_INDEX_TAKES_SECONDS" },
+            { phases: phaseSets.dictionary, label: "FOUN10_EASYSEARCH_INDEX_RUN_DICTIONARY",
+              when: "FOUN10_EASYSEARCH_INDEX_WHEN_DICTIONARY", takes: "FOUN10_EASYSEARCH_INDEX_TAKES_SHORT" },
+            { phases: phaseSets.products, label: "FOUN10_EASYSEARCH_INDEX_RUN_PRODUCTS",
+              when: "FOUN10_EASYSEARCH_INDEX_WHEN_PRODUCTS", takes: "FOUN10_EASYSEARCH_INDEX_TAKES_LONG" }
+        ] %}
+            <div class="foun10-tasks__row">
+                <div class="foun10-tasks__action">
+                    <button type="button" class="foun10-admin__reindex" data-reindex data-cl="foun10easysearchreindex"
+                            data-url="{{ selfLink|raw }}"
+                            data-langs="{{ scope }}"
+                            data-phases="{{ task.phases|join(',') }}">
+                        {{ translate({ ident: task.label }) }}
+                    </button>
+
+                    <span class="foun10-tasks__takes">{{ translate({ ident: task.takes }) }}</span>
+                </div>
+
+                <p class="foun10-tasks__when">{{ translate({ ident: task.when }) }}</p>
+            </div>
+        {% endfor %}
+
+        <div class="foun10-tasks__row foun10-tasks__row--full">
+            <div class="foun10-tasks__action">
+                <button type="button" class="foun10-admin__save" data-reindex data-cl="foun10easysearchreindex"
+                        data-url="{{ selfLink|raw }}"
+                        data-langs="{{ scope }}"
+                        data-phases="{{ phaseSets.full|join(',') }}">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_RUN_FULL" }) }}
+                </button>
+
+                <span class="foun10-tasks__takes">{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_TAKES_LONG" }) }}</span>
+            </div>
+
+            <p class="foun10-tasks__when">{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_WHEN_FULL" }) }}</p>
+        </div>
+    </div>
+
+    {# The other half of the question: what does NOT need a rebuild. Without it
+       the safe assumption is "reindex after every change", which is five and a
+       half minutes each time for nothing. #}
+    <p class="foun10-admin__note">{{ translate({ ident: "FOUN10_EASYSEARCH_INDEX_NO_REBUILD" }) }}</p>
+
+    {# The script has to be loaded before the partial, which calls into it. #}
+    <script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/admin-reindex.js')|raw }}?v={{ assetVersion }}"></script>
+
+    {% include "@foun10EasySearch/admin/_reindex-modal.html.twig" %}
+</div>

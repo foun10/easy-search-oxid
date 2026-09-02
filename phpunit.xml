@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap-unit.php"
+         colors="true"
+         cacheResultFile=".phpunit.cache/test-results"
+         convertDeprecationsToExceptions="true"
+         failOnWarning="true"
+         failOnRisky="true">
+    <testsuites>
+        <!--
+            unit: runs without a shop, against the classes that carry no OXID or
+            database dependency. The extensions, the engines and everything that
+            reads a table are covered by the integration suite instead.
+        -->
+        <testsuite name="unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
+</phpunit>

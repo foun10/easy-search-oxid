@@ -1,0 +1,68 @@
+{#
+    Example: the search box with the suggest dropdown.
+
+    Include it where your theme renders its search form:
+
+        {% include "@foun10EasySearch/frontend/suggest.html.twig" %}
+
+    Or, if you would rather keep your own form markup, take only the empty
+    container and the script block below and give them the id of your existing
+    input. suggest.js builds the whole dropdown itself - terms, products,
+    categories and the "show all" footer - so this template supplies just two
+    things: somewhere to put it, and the input to watch.
+
+    The form still submits normally. Everything here is an addition to a search
+    box that already works.
+#}
+{% block foun10_easysearch_suggest %}
+{% if oViewConf.isFoun10SuggestActive() %}
+    <form class="foun10-search" action="{{ oViewConf.getSelfActionLink() }}" method="get">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="search">
+
+        <div class="foun10-search__box">
+            <input type="search"
+                   id="searchParam"
+                   name="searchparam"
+                   class="foun10-search__input form-control"
+                   value="{{ oView.getSearchParamForHtml() }}"
+                   autocomplete="off"
+                   role="combobox"
+                   aria-expanded="false"
+                   aria-autocomplete="list"
+                   aria-controls="foun10Suggest"
+                   placeholder="{{ translate({ ident: "FOUN10_EASYSEARCH_SEARCH_PLACEHOLDER" }) }}">
+
+            <button type="submit" class="foun10-search__submit btn btn-primary">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_SEARCH_SUBMIT" }) }}
+            </button>
+
+            {# Filled by suggest.js; empty and hidden until there is something to show. #}
+            <div id="foun10Suggest" class="foun10-suggest" role="listbox" hidden></div>
+        </div>
+    </form>
+
+    <script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/suggest.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            window.foun10InitSuggest({
+                suggestId: 'foun10Suggest',
+                inputId: 'searchParam',
+                url: '{{ oViewConf.getFoun10SuggestUrl()|raw }}',
+                param: '{{ oViewConf.getFoun10SuggestParam()|escape('js') }}',
+                // Both come from the module settings, so the backend can tune how
+                // eagerly the dropdown asks without touching the theme.
+                minLength: {{ oViewConf.getFoun10SuggestMinLength() }},
+                delay: {{ oViewConf.getFoun10SuggestDelay() }},
+                labels: {
+                    terms: '{{ translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_TERMS" })|escape('js') }}',
+                    products: '{{ translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_PRODUCTS" })|escape('js') }}',
+                    categories: '{{ translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_CATEGORIES" })|escape('js') }}',
+                    // %s is replaced with the total number of results.
+                    all: '{{ translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_ALL" })|escape('js') }}'
+                }
+            });
+        });
+    </script>
+{% endif %}
+{% endblock %}

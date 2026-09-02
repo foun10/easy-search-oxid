@@ -1,0 +1,493 @@
+/*
+ * Storefront styling for the example templates.
+ *
+ * Self-contained on purpose: it styles only the module's own foun10-* classes
+ * and inherits colour, font and radius from the theme through CSS custom
+ * properties, so it drops into a shop without a build step and without fighting
+ * whatever is already there. Override the variables below - or drop this file
+ * entirely and style the classes yourself - once the module is wired into a
+ * real theme.
+ *
+ * Deliberately not shipped as the module's opinion about how a shop should
+ * look. It exists so the examples in views/twig/frontend/ are presentable the
+ * moment they are included, rather than a pile of unstyled spans that has to be
+ * made legible before anyone can tell whether the search works.
+ */
+.foun10-facets,
+.foun10-active-filters,
+.foun10-suggest,
+.foun10-search-toolbar,
+.foun10-correction {
+    --foun10-accent: var(--bs-primary, #0d6efd);
+    --foun10-border: var(--bs-border-color, #dee2e6);
+    --foun10-muted: var(--bs-secondary-color, #6c757d);
+    --foun10-surface: var(--bs-body-bg, #fff);
+    --foun10-radius: var(--bs-border-radius, .375rem);
+}
+
+/* ---------------------------------------------------------------
+   The button that opens the panel
+   --------------------------------------------------------------- */
+
+/* The button enters the theme's locator row through the one block that row
+   exposes, which comes first - so it is moved past the theme's own controls by
+   flex order rather than by markup position. The margin matches the spacing
+   the theme puts between them; without it the button sits flush against the
+   grid switch. Where the row is not flex - a theme's mobile breakpoint,
+   typically - the order is inert and document order applies. */
+.foun10-search-toolbar {
+    display: inline-flex;
+    align-items: center;
+    order: 1;
+    margin-left: 1rem;
+}
+
+/* Shape and size are deliberately not set here. The template gives the button
+   the theme's own button classes, so it takes the theme's radius, padding and
+   height and reads as one of the controls beside it - setting a radius of our
+   own is exactly what made it the only rounded thing in the row. Only the
+   colours are ours: black on white, so it does not compete with the products
+   the way an accent-coloured call to action would. */
+.foun10-facets__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    white-space: nowrap;
+    background: #fff;
+    color: #000;
+    border-color: currentColor;
+}
+
+.foun10-facets__toggle:hover,
+.foun10-facets__toggle:focus-visible {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* On a phone the theme's locator row stops being a flex container, so the order
+   above is inert and the button lands first - above the sort select, because
+   the only block the row exposes comes first.
+
+   Making just that row a column flex box hands the ordering back, and the
+   button goes last and full width, which is the reachable place for a control
+   that opens a full-height sheet. Scoped with :has() so it only applies to a
+   row this module actually put a button into. */
+@media (max-width: 767.98px) {
+    .locator:has(> .foun10-search-toolbar) {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .foun10-search-toolbar {
+        order: 99;
+        width: 100%;
+        margin-left: 0;
+        margin-top: .5rem;
+    }
+
+    .foun10-facets__toggle {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.foun10-facets__toggle svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* The only place the filter count appears while the panel is shut, which is
+   most of the time. */
+.foun10-facets__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .35rem;
+    border-radius: 999px;
+    background: var(--foun10-accent);
+    color: #fff;
+    font-size: .75rem;
+    line-height: 1;
+}
+
+/* ---------------------------------------------------------------
+   The panel
+   --------------------------------------------------------------- */
+
+.foun10-facets__sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.foun10-facets__sheet-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.foun10-facets__reset {
+    font-size: .85rem;
+    color: var(--foun10-muted);
+}
+
+.foun10-facets {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.foun10-facet__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: .5rem;
+}
+
+.foun10-facet__title {
+    font-weight: 600;
+}
+
+.foun10-facet__selected {
+    font-size: .8rem;
+    color: var(--foun10-muted);
+}
+
+.foun10-facet__values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+/* ---------------------------------------------------------------
+   One value
+   --------------------------------------------------------------- */
+
+.foun10-facet__value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.25rem;
+    padding: .35rem .75rem;
+    border: 1px solid var(--foun10-border);
+    border-radius: var(--foun10-radius);
+    background: var(--foun10-surface);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.foun10-facet__value:hover {
+    border-color: var(--foun10-accent);
+}
+
+/* Selected reads as pressed rather than merely tinted, because on a colour tile
+   there is no text to change. */
+.foun10-facet__value.active {
+    border-color: var(--foun10-accent);
+    box-shadow: inset 0 0 0 1px var(--foun10-accent);
+}
+
+.foun10-facet__value:focus-visible {
+    outline: 2px solid var(--foun10-accent);
+    outline-offset: 2px;
+}
+
+/* A value that leads nowhere is hidden by the template, never struck through -
+   this is only the belt to that pair of braces. */
+.foun10-facet__value.disabled {
+    display: none;
+}
+
+.foun10-facet__value--color {
+    width: 2.25rem;
+    padding: 0;
+    /* The swatch is the content, so the border has to stay off the colour. */
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08);
+}
+
+.foun10-facet__value--color.active {
+    box-shadow: inset 0 0 0 2px var(--foun10-surface), 0 0 0 2px var(--foun10-accent);
+}
+
+.foun10-facets__apply {
+    padding: 1rem;
+    border-top: 1px solid var(--foun10-border);
+}
+
+.foun10-facets__apply-button {
+    width: 100%;
+}
+
+/* ---------------------------------------------------------------
+   Active filter chips
+   --------------------------------------------------------------- */
+
+.foun10-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+/* Square corners. The theme's own buttons are slightly rounded, so this is a
+   deliberate difference rather than an oversight: a chip is a statement of what
+   is currently filtered, not a control that invites a click the way a button
+   does, and the flat edge keeps the two apart at a glance. */
+.foun10-active-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .6rem;
+    border: 1px solid var(--foun10-border);
+    border-radius: 0;
+    background: var(--foun10-surface);
+    font-size: .85rem;
+    line-height: 1.4;
+    text-decoration: none;
+    color: inherit;
+}
+
+.foun10-active-filter:hover {
+    border-color: var(--foun10-accent);
+}
+
+.foun10-active-filter__facet {
+    color: var(--foun10-muted);
+}
+
+/* A rounded square rather than a circle, so it reads as a sample of the colour
+   the tile in the panel shows rather than as a status dot. */
+.foun10-active-filter__swatch {
+    display: inline-block;
+    width: .85rem;
+    height: .85rem;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+}
+
+/* The glyph is taller than the text it sits beside and carries its own side
+   bearings, so line-height 1 plus a flex box is what actually centres it -
+   align-items on the chip alone leaves it low. */
+.foun10-active-filter__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: .9rem;
+    height: .9rem;
+    font-size: 1.15rem;
+    line-height: 1;
+    opacity: .55;
+}
+
+.foun10-active-filter:hover .foun10-active-filter__remove {
+    opacity: 1;
+}
+
+.foun10-active-filters__reset {
+    font-size: .85rem;
+    color: var(--foun10-muted);
+}
+
+/* ---------------------------------------------------------------
+   The correction line
+   --------------------------------------------------------------- */
+
+.foun10-correction {
+    margin-bottom: .5rem;
+    color: var(--foun10-muted);
+}
+
+.foun10-correction__original {
+    margin-left: .5rem;
+}
+
+/* ---------------------------------------------------------------
+   The suggest dropdown
+   --------------------------------------------------------------- */
+
+/* The dropdown is absolutely positioned, so whatever holds it has to be a
+   positioning context. The example template gives it .foun10-search__box; when
+   the container is dropped into a theme's own search form instead, :has() finds
+   that form without the theme having to be told. */
+.foun10-search__box,
+:has(> .foun10-suggest) {
+    position: relative;
+}
+
+.foun10-suggest {
+    position: absolute;
+    z-index: 1050;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--foun10-border);
+    border-radius: var(--foun10-radius);
+    background: var(--foun10-surface);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1);
+}
+
+/* On a phone the search box is a fraction of the screen, and a dropdown the
+   width of its input is unreadable - a product title fits in about three words.
+   Below the breakpoint it spans the viewport instead.
+
+   Fixed rather than absolute, and the positioning context above is given back:
+   anchored to the search box it would inherit that box's left edge, and the
+   usual 50vw/-50vw breakout only lands correctly when the box happens to be
+   centred. suggest.js sets `top` from the input's own position each time it
+   opens, which is the one value CSS cannot work out here. */
+@media (max-width: 767.98px) {
+    .foun10-search__box,
+    :has(> .foun10-suggest) {
+        position: static;
+    }
+
+    .foun10-suggest {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: auto;
+        max-height: 70vh;
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+    }
+}
+
+/* Two columns: terms and categories on the left, products on the right. The
+   script already builds them that way; this is what stops them stacking. Below
+   the breakpoint they become one column, because two 10rem columns on a phone
+   are unreadable. */
+.foun10-suggest__inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem 2rem;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .foun10-suggest__inner {
+        grid-template-columns: minmax(12rem, 1fr) minmax(0, 2fr);
+    }
+}
+
+.foun10-suggest__col {
+    min-width: 0;
+}
+
+.foun10-suggest__group + .foun10-suggest__group {
+    margin-top: 1rem;
+}
+
+.foun10-suggest__label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--foun10-muted);
+    margin-bottom: .5rem;
+}
+
+.foun10-suggest__term,
+.foun10-suggest__category,
+.foun10-suggest__product {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .4rem .3rem;
+    border-radius: var(--foun10-radius);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+/* A term is a <button>, because picking one submits the search rather than
+   navigating to a URL. It should still read as a link: no chrome, no
+   underline, full width so the whole row is the target. */
+.foun10-suggest__term {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    appearance: none;
+}
+
+.foun10-suggest__term:hover,
+.foun10-suggest__category:hover,
+.foun10-suggest__product:hover,
+.foun10-suggest__term.active,
+.foun10-suggest__category.active,
+.foun10-suggest__product.active {
+    background: rgba(0, 0, 0, .04);
+}
+
+/* The thumbnail is a span wrapping the img, so the box has to be sized here and
+   the image constrained inside it - otherwise the picture renders at its own
+   size and sits on top of the title. */
+.foun10-suggest__thumb {
+    flex: 0 0 3rem;
+    width: 3rem;
+    height: 3rem;
+}
+
+.foun10-suggest__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Takes the middle, and min-width:0 is what lets the title ellipsis rather than
+   push the price out of the row. */
+.foun10-suggest__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.foun10-suggest__price {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding-left: .5rem;
+    white-space: nowrap;
+}
+
+.foun10-suggest__title,
+.foun10-suggest__category-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.foun10-suggest__brand,
+.foun10-suggest__category-path {
+    display: block;
+    font-size: .8rem;
+    color: var(--foun10-muted);
+}
+
+.foun10-suggest__price--sale .foun10-suggest__price-now {
+    color: #c0392b;
+}
+
+.foun10-suggest__price-old {
+    margin-left: .35rem;
+    text-decoration: line-through;
+    color: var(--foun10-muted);
+    font-size: .85rem;
+}
+
+.foun10-suggest__footer {
+    border-top: 1px solid var(--foun10-border);
+    padding: .75rem 1rem;
+    text-align: center;
+}
+
+.foun10-suggest__all {
+    text-decoration: none;
+}

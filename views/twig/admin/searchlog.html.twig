@@ -1,0 +1,276 @@
+{#
+    foun10 -> Suche -> Auswertung
+
+    Read only. What was searched, how often, and what found nothing.
+
+    The toolbar is one form that posts back to this screen - the same pattern as
+    the index screen, so the session token and the class come along without
+    building a URL by hand. Nothing here has an fnc: every control only changes
+    what is shown.
+
+    Every term on this page is rendered escaped, and never with |raw. The search
+    box is a public form field and its contents end up in these tables; the
+    filter that keeps payloads out of the table is a courtesy, escaping here is
+    what actually makes the screen safe.
+#}
+{% set assetVersion = '2' %}
+
+<link href="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/css/admin.css')|raw }}?v={{ assetVersion }}" rel="stylesheet">
+
+{% set summary = oView.getSummary() %}
+{% set chart = oView.getChart() %}
+{% set chartMax = oView.getChartMax() %}
+{% set topTerms = oView.getTopTerms() %}
+{% set zeroTerms = oView.getZeroHitTerms() %}
+{% set editLangId = oView.getEditLanguageId() %}
+{% set periodName = oView.getPeriodName() %}
+{% set limit = oView.getLimit() %}
+{% set showSuspicious = oView.isShowingSuspicious() %}
+{% set selfLink = oViewConf.getSelfLink() %}
+
+<div class="foun10-admin">
+    <h1>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_HEADLINE" }) }}</h1>
+    <p class="foun10-admin__intro">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_INTRO" }) }}</p>
+
+    <form name="myedit" id="foun10LogForm" method="post" action="{{ selfLink|raw }}">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="foun10easysearchlog">
+        <input type="hidden" name="fnc" value="">
+        <input type="hidden" name="logLang" value="{{ editLangId }}">
+
+        <div class="foun10-admin__toolbar">
+            <label class="foun10-admin__language">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_PERIOD" }) }}
+
+                <select name="logPeriod" data-reload>
+                    {% for period in oView.getPeriods() %}
+                        <option value="{{ period.value }}"{% if period.value == periodName %} selected{% endif %}>
+                            {{ period.label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="foun10-admin__language">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_LANGUAGE" }) }}
+
+                <select data-language-switch>
+                    {% for language in oView.getLanguages() %}
+                        <option value="{{ language.id }}"{% if language.id == editLangId %} selected{% endif %}>
+                            {{ language.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="foun10-admin__language">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_LIMIT" }) }}
+
+                <select name="logLimit" data-reload>
+                    {% for value in oView.getLimits() %}
+                        <option value="{{ value }}"{% if value == limit %} selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="foun10-admin__toggle">
+                <input type="checkbox" name="showSuspicious" value="1" data-reload{% if showSuspicious %} checked{% endif %}>
+                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_SHOW_SUSPICIOUS" }) }}
+            </label>
+        </div>
+    </form>
+
+    {% if summary.searches == 0 %}
+        <p class="foun10-admin__note">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_EMPTY" }) }}</p>
+    {% else %}
+        <div class="foun10-kpi">
+            <div class="foun10-kpi__card">
+                <span class="foun10-kpi__value">{{ oView.formatNumber(summary.searches) }}</span>
+                <span class="foun10-kpi__label">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_SEARCHES" }) }}</span>
+                <span class="foun10-kpi__hint">{{ oView.getPeriodLabel() }}</span>
+            </div>
+
+            <div class="foun10-kpi__card">
+                <span class="foun10-kpi__value">{{ oView.formatNumber(summary.terms) }}</span>
+                <span class="foun10-kpi__label">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_TERMS" }) }}</span>
+                <span class="foun10-kpi__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_TERMS_HINT" }) }}</span>
+            </div>
+
+            <div class="foun10-kpi__card foun10-kpi__card--warn">
+                <span class="foun10-kpi__value">{{ oView.formatNumber(summary.zeroSearches) }}</span>
+                <span class="foun10-kpi__label">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_ZERO" }) }}</span>
+                <span class="foun10-kpi__hint">{{ summary.zeroShare }} %</span>
+            </div>
+
+            <div class="foun10-kpi__card foun10-kpi__card--warn">
+                <span class="foun10-kpi__value">{{ oView.formatNumber(summary.zeroTerms) }}</span>
+                <span class="foun10-kpi__label">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_ZERO_TERMS" }) }}</span>
+                <span class="foun10-kpi__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_KPI_ZERO_TERMS_HINT" }) }}</span>
+            </div>
+        </div>
+
+        {# Bars rather than a line: the series is a count per day, and a line
+           between two days suggests values in between that were never measured.
+           The red part of each bar is the share of that day's searches that
+           found nothing - the two numbers belong in one bar because the second
+           is a part of the first. #}
+        <div class="foun10-chart">
+            <div class="foun10-chart__head">
+                <h2 class="foun10-chart__title">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_CHART" }) }}</h2>
+
+                <span class="foun10-chart__legend">
+                    <span class="foun10-chart__key foun10-chart__key--total"></span>
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_SEARCHES" }) }}
+
+                    <span class="foun10-chart__key foun10-chart__key--zero"></span>
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_WITHOUT_HITS" }) }}
+                </span>
+            </div>
+
+            <div class="foun10-chart__plot">
+                <span class="foun10-chart__scale">{{ oView.formatNumber(chartMax) }}</span>
+
+                <div class="foun10-chart__bars">
+                    {% for bar in chart %}
+                        <div class="foun10-chart__slot{% if not bar.inPeriod %} is-context{% endif %}"
+                             title="{{ bar.title }}">
+                            <div class="foun10-chart__column">
+                                <div class="foun10-chart__bar" style="height: {{ bar.height|round(1) }}%">
+                                    <span class="foun10-chart__zero" style="height: {{ bar.zeroHeight|round(1) }}%"></span>
+                                </div>
+                            </div>
+
+                            <span class="foun10-chart__label">{{ bar.label }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if periodName == 'day' %}
+                <p class="foun10-chart__note">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_CHART_CONTEXT" }) }}</p>
+            {% endif %}
+        </div>
+
+        <div class="foun10-lists">
+            <section class="foun10-lists__block">
+                <h2 class="foun10-lists__title">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_TOP" }) }}</h2>
+                <p class="foun10-lists__hint">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_TOP_HINT" }) }}</p>
+
+                <table class="foun10-rules foun10-log">
+                    <thead>
+                        <tr>
+                            <th>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_TERM" }) }}</th>
+                            <th class="foun10-log__number">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_COUNT" }) }}</th>
+                            <th class="foun10-log__number">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_HITS" }) }}</th>
+                            <th>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_LAST_SEEN" }) }}</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in topTerms %}
+                            <tr>
+                                <td>
+                                    {{ row.term }}
+                                    {% if row.suspicious is defined %}
+                                        <span class="foun10-log__flag">{{ row.suspicious }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="foun10-log__number">{{ oView.formatNumber(row.searches) }}</td>
+                                <td class="foun10-log__number{% if row.hits == 0 %} foun10-log__number--zero{% endif %}">
+                                    {{ oView.formatNumber(row.hits) }}
+                                </td>
+                                <td>{{ oView.formatDate(row.lastSeen) }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_NONE" }) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="foun10-lists__block">
+                <h2 class="foun10-lists__title">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_ZERO" }) }}</h2>
+                <p class="foun10-lists__hint">
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_ZERO_HINT" }) }}
+                    {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_ZERO_STALE" }) }}
+                </p>
+
+                <table class="foun10-rules foun10-log">
+                    <thead>
+                        <tr>
+                            <th>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_TERM" }) }}</th>
+                            <th class="foun10-log__number">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_COUNT" }) }}</th>
+                            <th>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_CORRECTION" }) }}</th>
+                            <th>{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_LAST_SEEN" }) }}</th>
+                            <th class="foun10-log__action"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in zeroTerms %}
+                            <tr>
+                                <td>
+                                    {{ row.term }}
+                                    {% if row.suspicious is defined %}
+                                        <span class="foun10-log__flag">{{ row.suspicious }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="foun10-log__number">{{ oView.formatNumber(row.searches) }}</td>
+                                <td>{{ row.corrected }}</td>
+                                <td>{{ oView.formatDate(row.lastSeen) }}</td>
+                                <td class="foun10-log__action">
+                                    {# Its own form rather than a link: the term
+                                       travels as a posted field, so nothing has
+                                       to be encoded into a URL, and the session
+                                       token comes along the same way it does
+                                       everywhere else in the backend.
+
+                                       A term that already has a rule keeps the
+                                       button - it leads to the rule - but says
+                                       so, because the row stays on this list
+                                       until the word is searched again and the
+                                       button would otherwise read as "the rule
+                                       did not work". #}
+                                    <form method="post" action="{{ selfLink|raw }}">
+                                        {{ oViewConf.getHiddenSid()|raw }}
+                                        <input type="hidden" name="cl" value="foun10easysearchsynonyms">
+                                        <input type="hidden" name="fnc" value="">
+                                        <input type="hidden" name="synonymLang" value="{{ editLangId }}">
+                                        <input type="hidden" name="synonymTerm" value="{{ row.term }}">
+
+                                        {% if row.hasSynonym %}
+                                            <span class="foun10-log__has-synonym">
+                                                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_SYNONYM_EXISTS" }) }}
+                                            </span>
+
+                                            <button type="submit" class="foun10-log__synonym">
+                                                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_EDIT_SYNONYM" }) }}
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="foun10-log__synonym">
+                                                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_MAKE_SYNONYM" }) }}
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_ZERO_NONE" }) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        {# Read after the lists, because that is when the filter has counted. #}
+        {% if oView.getSuspiciousCount() > 0 and not showSuspicious %}
+            <p class="foun10-admin__note">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_LOG_SUSPICIOUS_HIDDEN", args: oView.getSuspiciousCount() }) }}
+            </p>
+        {% endif %}
+    {% endif %}
+
+    <p class="foun10-admin__note">{{ translate({ ident: "FOUN10_EASYSEARCH_LOG_PRIVACY" }) }}</p>
+</div>
+
+<script src="{{ oViewConf.getModuleUrl('foun10EasySearch', 'out/js/admin-searchlog.js')|raw }}?v={{ assetVersion }}"></script>

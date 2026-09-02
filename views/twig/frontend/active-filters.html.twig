@@ -1,0 +1,60 @@
+{#
+    Example: a row of removable chips above the result list, one per selected
+    facet value.
+
+        {% include "@foun10EasySearch/frontend/active-filters.html.twig" %}
+
+    These **are** links, unlike the values inside the panel, and that is not an
+    inconsistency. In the panel the customer assembles a selection and the apply
+    button navigates once; here a click is the whole interaction - switch this
+    one value off - so a plain link is exactly right, and it works with no
+    JavaScript at all.
+
+    Render it outside whatever "did we find anything" branch your listing has. A
+    filter combination that matches nothing is precisely when the customer needs
+    to see and undo what they picked; hiding the chips there leaves them on an
+    empty page with no way back except the browser button.
+#}
+{% block foun10_easysearch_active_filters %}
+    {% set facets = facets|default(oView.getFoun10Facets()) %}
+
+    {% if oView.hasFoun10ActiveFilters() %}
+        <div class="foun10-active-filters">
+            {% for facet in facets %}
+                {% for value in facet.getSelectedValues() %}
+                    {% set colorHexCode = value.getHexCode() %}
+
+                    <a href="{{ oView.getFoun10FilterToggleUrl(facet.getAttributeId(), value.getValueId())|raw }}"
+                       rel="nofollow"
+                       class="foun10-active-filter"
+                       title="{{ facet.getTitle() }}: {{ value.getLabel() }}">
+                        <span class="foun10-active-filter__facet">{{ facet.getTitle() }}:</span>
+
+                        {% if colorHexCode %}
+                            <span class="foun10-active-filter__swatch"
+                                  style="background-color: {{ colorHexCode }};"></span>
+                        {% endif %}
+
+                        <span class="foun10-active-filter__value">{{ value.getLabel() }}</span>
+
+                        {#
+                            A real character rather than the theme's icon.
+                            Apex's times.svg carries width and height but no
+                            viewBox, so any attempt to size it from CSS scales
+                            the box without scaling the glyph and you get the
+                            corner of a 16px cross sitting low in the chip. A
+                            glyph also means the chip keeps its remove
+                            affordance in a theme that has no such icon at all.
+                        #}
+                        <span class="foun10-active-filter__remove" aria-hidden="true">&times;</span>
+                    </a>
+                {% endfor %}
+            {% endfor %}
+
+            <a href="{{ oView.getFoun10FilterResetUrl()|raw }}" rel="nofollow"
+               class="foun10-active-filters__reset">
+                {{ translate({ ident: "FOUN10_EASYSEARCH_FILTER_RESET_ALL" }) }}
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}

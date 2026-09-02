@@ -1,0 +1,46 @@
+{#
+    Adds the suggest dropdown to whatever search box the theme already has.
+
+    Only the container and the initialisation: the theme's form, input and
+    button stay untouched, because two search boxes would be worse than none.
+    suggest.js watches the input by id - `searchParam` is OXID's own name for
+    it, which every theme derived from the standard ones keeps.
+#}
+{% extends "widget/header/search.html.twig" %}
+
+{% block dd_widget_header_search_form_inner %}
+    {{ parent() }}
+
+    {% if oViewConf.isFoun10SuggestActive() %}
+        {{ style({
+            include: oViewConf.getModuleUrl('foun10EasySearch', 'out/css/frontend.css')
+        }) }}
+
+        <div id="foun10Suggest" class="foun10-suggest" role="listbox" hidden></div>
+
+        {{ script({
+            include: oViewConf.getModuleUrl('foun10EasySearch', 'out/js/suggest.js'),
+            dynamic: __oxid_include_dynamic
+        }) }}
+
+        {% set foun10SuggestOptions = {
+            suggestId: 'foun10Suggest',
+            inputId: 'searchParam',
+            url: oViewConf.getFoun10SuggestUrl(),
+            param: oViewConf.getFoun10SuggestParam(),
+            minLength: oViewConf.getFoun10SuggestMinLength(),
+            delay: oViewConf.getFoun10SuggestDelay(),
+            labels: {
+                terms: translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_TERMS" }),
+                products: translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_PRODUCTS" }),
+                categories: translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_CATEGORIES" }),
+                all: translate({ ident: "FOUN10_EASYSEARCH_SUGGEST_ALL" })
+            }
+        } %}
+
+        {{ script({
+            add: "foun10InitSuggest(" ~ foun10SuggestOptions|json_encode|raw ~ ");",
+            dynamic: __oxid_include_dynamic
+        }) }}
+    {% endif %}
+{% endblock %}
